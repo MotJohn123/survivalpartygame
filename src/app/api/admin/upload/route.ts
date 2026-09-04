@@ -16,6 +16,7 @@ export async function POST(request: Request) {
     return Response.json({ url: blob.url });
   } catch (error) {
     console.error("Dashboard photo Blob upload failed", error);
-    return Response.json({ error: "Fotku se nepodařilo uložit do Blob úložiště. Zkontroluj BLOB_READ_WRITE_TOKEN." }, { status: 502 });
+    const details = error instanceof Error ? error.message : "Neznámá chyba Blob úložiště.";
+    return Response.json({ error: `Blob upload selhal: ${details}` }, { status: 502 });
   }
 }
