@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const text = typeof body.text === "string" ? body.text.trim() : "";
   const photoUrl = typeof body.photoUrl === "string" && body.photoUrl ? body.photoUrl : null;
-  if (!text) return Response.json({ error: "Text příspěvku je povinný." }, { status: 400 });
+  if (!text || !photoUrl) return Response.json({ error: "Text i fotka příspěvku jsou povinné." }, { status: 400 });
   const post = await prisma.dashboardPost.create({ data: { text, photoUrl, isSystem: true } });
   await notifyPlayers("Novinka z nástěnky", text);
   return Response.json({ post }, { status: 201 });
