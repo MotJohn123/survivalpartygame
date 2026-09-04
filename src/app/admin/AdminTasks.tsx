@@ -1,0 +1,35 @@
+"use client";
+
+import QRCode from "qrcode";
+import { FormEvent, useEffect, useState } from "react";
+
+type Task = { id: number; taskCode: string; taskText: string; taskPoints: number; repeatability: string; maxCompletions: number | null; isPublicQuest: boolean; isActive: boolean; _count: { completions: number } };
+
+export default function AdminTasks() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [form, setForm] = useState({ taskCode: "", taskText: "", taskPoints: "10", repeatability: "ONCE", maxCompletions: "2", isPublicQuest: false });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function loadTasks() { const response = await fetch("/api/admin/tasks", { cache: "no-store" }); if (response.ok) setTasks((await response.json()).tasks); }
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/admin/tasks", { cache: "no-store" }).then(async (response) => {
+      if (active && response.ok) setTasks((await response.json()).tasks);
+    });
+    return () => { active = false; };
+  }, []);
+
+  async function createTask(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setLoading(true); setError("");
+    const response = await fetch("/api/admin/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, taskPoints: Number(form.taskPoints), maxCompletions: Number(form.maxCompletions) }) });
+    const result = await response.json(); setLoading(false);
+    if (!response.ok) { setError(result.error ?? "Úkol se nepodařilo vytvořit."); return; }
+    setTasks((current) => [result.task, ...current]); setForm({ taskCode: "", taskText: "", taskPoints: "10", repeatability: "ONCE", maxCompletions: "2", isPublicQuest: false });
+  }
+
+  async function cancelTask(id: number) { await fetch(`/api/admin/tasks/${id}`, { method: "PATCH" }); await loadTasks(); }
+  async function showQr(taskCode: string) { const url = `${window.location.origin}/game?code=${encodeURIComponent(taskCode)}`; const dataUrl = await QRCode.toDataURL(url, { width: 220, margin: 2 }); const link = document.createElement("a"); link.href = dataUrl; link.download = `survival-party-${taskCode}.png`; link.click(); }
+
+  return <section className="admin-tasks"><div className="admin-section-heading"><div><p className="eyebrow"><span /> pracovní stůl</p><h2>Úkoly<br /><i>výpravy.</i></h2></div><a href="/api/admin/logout">Odhlásit</a></div><form className="admin-task-form" onSubmit={createTask}><input placeholder="Kód, např. OHEN" value={form.taskCode} onChange={(event) => setForm({ ...form, taskCode: event.target.value })} /><input placeholder="Text úkolu" value={form.taskText} onChange={(event) => setForm({ ...form, taskText: event.target.value })} /><input type="number" min="1" placeholder="Body" value={form.taskPoints} onChange={(event) => setForm({ ...form, taskPoints: event.target.value })} /><select value={form.repeatability} onChange={(event) => setForm({ ...form, repeatability: event.target.value })}><option value="ONCE">Jednou</option><option value="MULTIPLE">Vícekrát</option><option value="UNLIMITED">Neomezeně</option></select>{form.repeatability === "MULTIPLE" && <input type="number" min="1" placeholder="Maximum opakování" value={form.maxCompletions} onChange={(event) => setForm({ ...form, maxCompletions: event.target.value })} />}<label><input type="checkbox" checked={form.isPublicQuest} onChange={(event) => setForm({ ...form, isPublicQuest: event.target.checked })} /> Veřejný úkol</label><button type="submit" disabled={loading}>{loading ? "Ukládám…" : "Vytvořit úkol"}</button>{error && <p className="task-error">{error}</p>}</form><div className="admin-task-list">{tasks.map((task) => <article className={!task.isActive ? "inactive" : ""} key={task.id}><div><span className="admin-code">{task.taskCode}</span><h3>{task.taskText}</h3><p>+{task.taskPoints} bodů · splněno {task._count.completions}×{task.isPublicQuest && " · veřejný úkol"}</p></div><div className="admin-task-actions"><button type="button" onClick={() => void showQr(task.taskCode)}>Stáhnout QR</button>{task.isActive && <button type="button" onClick={() => void cancelTask(task.id)}>Zrušit úkol</button>}</div></article>)}</div></section>;
+}

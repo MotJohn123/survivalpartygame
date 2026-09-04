@@ -1,4 +1,128 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Survival Party
+
+Mobilní víkendová týmová hra v češtině. Aplikace používá Next.js, Prisma 7, PostgreSQL/Neon, Vercel Blob a Web Push.
+
+## 1. Lokální spuštění
+
+Požadavky:
+
+- Node.js 20+
+- PostgreSQL databáze, ideálně Neon
+- npm
+
+Nainstaluj závislosti:
+
+```powershell
+npm install
+```
+
+Vytvoř soubor `.env` podle `.env.example`:
+
+```env
+DATABASE_URL="postgresql://...pooled..."
+DATABASE_URL_UNPOOLED="postgresql://...direct..."
+AUTH_SECRET="dlouhy-nahodny-retezec"
+ADMIN_PASSWORD="heslo-pro-spravce"
+BLOB_READ_WRITE_TOKEN=""
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=""
+VAPID_PUBLIC_KEY=""
+VAPID_PRIVATE_KEY=""
+VAPID_SUBJECT="mailto:organizer@example.com"
+```
+
+`DATABASE_URL` je pooled URL pro běžící aplikaci. `DATABASE_URL_UNPOOLED` je direct URL pro Prisma migrace.
+
+Vytvoř databázovou migraci a Prisma klienta:
+
+```powershell
+npx prisma migrate dev --name init
+npm run db:generate
+```
+
+Naplnění testovacími týmy, hráči a úkoly:
+
+```powershell
+npm run db:seed
+```
+
+Spuštění:
+
+```powershell
+npm run dev
+```
+
+Otevři [http://localhost:3000](http://localhost:3000). Administrace je na `/admin`. Výchozí lokální heslo je `survivalparty`, pokud není nastaveno `ADMIN_PASSWORD`.
+
+## 2. Vercel a Neon
+
+1. Nahraj projekt do GitHubu.
+2. Importuj repository na Vercel.
+3. Ve Vercel projektu otevři **Storage → Connect Database → Neon**.
+4. Nech vložit `DATABASE_URL` a `DATABASE_URL_UNPOOLED` do Vercel Environment Variables.
+5. Přidej Vercel Blob a získej `BLOB_READ_WRITE_TOKEN`.
+6. Nastav `AUTH_SECRET` a vlastní `ADMIN_PASSWORD`.
+7. Nastav VAPID proměnné pro push notifikace.
+8. Deployni projekt.
+
+Po připojení databáze spusť migraci proti produkční databázi:
+
+```powershell
+npx prisma migrate deploy
+```
+
+Seed používej pouze tehdy, pokud chceš do produkce vložit testovací data:
+
+```powershell
+npm run db:seed
+```
+
+## 3. Push notifikace
+
+Vygeneruj VAPID klíče jednou lokálně:
+
+```powershell
+npx web-push generate-vapid-keys
+```
+
+Výstup vlož do:
+
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
+- `VAPID_PUBLIC_KEY`
+- `VAPID_PRIVATE_KEY`
+- `VAPID_SUBJECT`
+
+Hráč musí otevřít `/game`, povolit oznámení a ideálně aplikaci nainstalovat na domovskou obrazovku telefonu.
+
+## 4. Kontrola před akcí
+
+```powershell
+npm run lint
+$env:DATABASE_URL="postgresql://...pooled..."
+$env:DATABASE_URL_UNPOOLED="postgresql://...direct..."
+npx prisma validate
+npm run build
+```
+
+Rychlý manuální průchod:
+
+1. Přihlášení hráče jménem.
+2. Vytvoření úkolu v `/admin`.
+3. Ověření kódu i QR skenu na `/game`.
+4. Kontrola připsaných bodů a historie.
+5. Přiřazení hráče do týmu.
+6. Spuštění hlasování a sázkové rundy.
+7. Vyhodnocení sázky a kontrola leaderboardu.
+8. Povolení push notifikací.
+
+## Dostupné příkazy
+
+```powershell
+npm run dev
+npm run build
+npm run lint
+npm run db:generate
+npm run db:seed
+```This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 

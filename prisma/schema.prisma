@@ -1,0 +1,248 @@
+datasource db {
+  provider  = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum TaskRepeatability {
+  ONCE
+  MULTIPLE
+  UNLIMITED
+}
+
+enum VoteType {
+  YES_NO
+  MULTIPLE_CHOICE
+  PLAYER_SELECT
+}
+
+enum VoteScope {
+  ALL
+  TEAM
+  CUSTOM_GROUP
+}
+
+enum PointsSource {
+  TASK
+  PUBLIC_QUEST_GIFT_RECEIVED
+  SETUP_QUESTION
+  BETTING_WIN
+  ADMIN_ADJUSTMENT
+}
+
+model Player {
+  id Int @id @default(autoincrement())
+  name String @unique
+  photoUrl String?
+  points Int @default(0)
+  teamId Int?
+  team Team? @relation(fields: [teamId], references: [id])
+  sessionToken String? @unique
+  createdAt DateTime @default(now())
+  taskCompletions TaskCompletion[]
+  dashboardPosts DashboardPost[]
+  votesCast VoteResponse[]
+  voteCandidateOf VoteCandidate[]
+  voteEligibleFor VoteEligibleVoter[]
+  pointsSent PointsTransfer[] @relation("Sender")
+  pointsReceived PointsTransfer[] @relation("Receiver")
+  questionAnswers QuestionAnswer[]
+  pointsLedger PointsLedgerEntry[]
+  pushSubscriptions PushSubscription[]
+  bettingCandidacies BettingCandidate[]
+  betsPlaced Bet[] @relation("Bettor")
+  betsAsCandidate Bet[] @relation("BetOnCandidate")
+  bettingWins BettingWinner[]
+}
+
+model Team {
+  id Int @id @default(autoincrement())
+  name String @unique
+  color String?
+  players Player[]
+  createdAt DateTime @default(now())
+  bettingRoundsAsTeamA BettingRound[] @relation("BettingTeamA")
+  bettingRoundsAsTeamB BettingRound[] @relation("BettingTeamB")
+}
+
+model Task {
+  id Int @id @default(autoincrement())
+  taskCode String @unique
+  taskText String
+  taskPoints Int
+  repeatability TaskRepeatability @default(ONCE)
+  maxCompletions Int?
+  isPublicQuest Boolean @default(false)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  completions TaskCompletion[]
+}
+
+model TaskCompletion {
+  id Int @id @default(autoincrement())
+  taskId Int
+  task Task @relation(fields: [taskId], references: [id])
+  playerId Int
+  player Player @relation(fields: [playerId], references: [id])
+  pointsAwarded Int
+  photoUrl String?
+  completedAt DateTime @default(now())
+}
+
+model PointsTransfer {
+  id Int @id @default(autoincrement())
+  fromId Int
+  from Player @relation("Sender", fields: [fromId], references: [id])
+  toId Int
+  to Player @relation("Receiver", fields: [toId], references: [id])
+  points Int
+  reason String?
+  createdAt DateTime @default(now())
+}
+
+model PointsLedgerEntry {
+  id Int @id @default(autoincrement())
+  playerId Int
+  player Player @relation(fields: [playerId], references: [id])
+  delta Int
+  source PointsSource
+  note String?
+  createdAt DateTime @default(now())
+}
+
+model DashboardPost {
+  id Int @id @default(autoincrement())
+  playerId Int?
+  player Player? @relation(fields: [playerId], references: [id])
+  text String
+  photoUrl String?
+  isSystem Boolean @default(false)
+  createdAt DateTime @default(now())
+}
+
+model SetupQuestion {
+  id Int @id @default(autoincrement())
+  text String
+  points Int @default(0)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  answers QuestionAnswer[]
+}
+
+model QuestionAnswer {
+  id Int @id @default(autoincrement())
+  questionId Int
+  question SetupQuestion @relation(fields: [questionId], references: [id])
+  playerId Int
+  player Player @relation(fields: [playerId], references: [id])
+  answerText String
+  answeredAt DateTime @default(now())
+  @@unique([questionId, playerId])
+}
+
+model Voting {
+  id Int @id @default(autoincrement())
+  question String
+  voteType VoteType
+  scope VoteScope
+  teamId Int?
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  closedAt DateTime?
+  options VoteOption[]
+  candidates VoteCandidate[]
+  eligibleVoters VoteEligibleVoter[]
+  responses VoteResponse[]
+}
+
+model VoteOption {
+  id Int @id @default(autoincrement())
+  votingId Int
+  voting Voting @relation(fields: [votingId], references: [id])
+  text String
+}
+
+model VoteCandidate {
+  votingId Int
+  voting Voting @relation(fields: [votingId], references: [id])
+  playerId Int
+  player Player @relation(fields: [playerId], references: [id])
+  @@id([votingId, playerId])
+}
+
+model VoteEligibleVoter {
+  votingId Int
+  voting Voting @relation(fields: [votingId], references: [id])
+  playerId Int
+  player Player @relation(fields: [playerId], references: [id])
+  @@id([votingId, playerId])
+}
+
+model VoteResponse {
+  id Int @id @default(autoincrement())
+  votingId Int
+  voting Voting @relation(fields: [votingId], references: [id])
+  playerId Int
+  player Player @relation(fields: [playerId], references: [id])
+  answer String
+  createdAt DateTime @default(now())
+  @@unique([votingId, playerId])
+}
+
+model PushSubscription {
+  id Int @id @default(autoincrement())
+  playerId Int
+  player Player @relation(fields: [playerId], references: [id])
+  endpoint String @unique
+  p256dh String
+  auth String
+  createdAt DateTime @default(now())
+}
+
+model BettingRound {
+  id Int @id @default(autoincrement())
+  title String?
+  teamAId Int
+  teamA Team @relation("BettingTeamA", fields: [teamAId], references: [id])
+  teamBId Int
+  teamB Team @relation("BettingTeamB", fields: [teamBId], references: [id])
+  rewardPoints Int
+  isOpen Boolean @default(true)
+  isResolved Boolean @default(false)
+  createdAt DateTime @default(now())
+  closedAt DateTime?
+  resolvedAt DateTime?
+  candidates BettingCandidate[]
+  bets Bet[]
+  winners BettingWinner[]
+}
+
+model BettingCandidate {
+  bettingRoundId Int
+  bettingRound BettingRound @relation(fields: [bettingRoundId], references: [id])
+  playerId Int
+  player Player @relation(fields: [playerId], references: [id])
+  @@id([bettingRoundId, playerId])
+}
+
+model Bet {
+  id Int @id @default(autoincrement())
+  bettingRoundId Int
+  bettingRound BettingRound @relation(fields: [bettingRoundId], references: [id])
+  bettorId Int
+  bettor Player @relation("Bettor", fields: [bettorId], references: [id])
+  candidateId Int
+  candidate Player @relation("BetOnCandidate", fields: [candidateId], references: [id])
+  createdAt DateTime @default(now())
+  @@unique([bettingRoundId, bettorId])
+}
+
+model BettingWinner {
+  bettingRoundId Int
+  bettingRound BettingRound @relation(fields: [bettingRoundId], references: [id])
+  playerId Int
+  player Player @relation(fields: [playerId], references: [id])
+  @@id([bettingRoundId, playerId])
+}
