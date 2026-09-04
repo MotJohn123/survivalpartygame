@@ -6,11 +6,13 @@ import PwaRegister from "./PwaRegister";
 const bodyFont = DM_Sans({
   variable: "--font-body",
   subsets: ["latin"],
+  preload: false,
 });
 
 const displayFont = Oswald({
   variable: "--font-display",
   subsets: ["latin"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
