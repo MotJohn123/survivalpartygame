@@ -10,6 +10,10 @@ export async function POST(request: Request) {
   if (!(file instanceof File) || !allowedTypes.has(file.type) || file.size > maxSize) return Response.json({ error: "Vyber JPG, PNG nebo WebP do velikosti 5 MB." }, { status: 400 });
   if (!process.env.BLOB_READ_WRITE_TOKEN) return Response.json({ error: "Úložiště fotek zatím není nakonfigurované." }, { status: 503 });
   const extension = file.type.split("/")[1].replace("jpeg", "jpg");
-  const blob = await put(`dashboard/${Date.now()}.${extension}`, file, { access: "public", addRandomSuffix: true });
-  return Response.json({ url: blob.url });
+  try {
+    const blob = await put(`dashboard/${Date.now()}.${extension}`, file, { access: "public", addRandomSuffix: true });
+    return Response.json({ url: blob.url });
+  } catch {
+    return Response.json({ error: "Fotku se nepodařilo uložit do Blob úložiště. Zkontroluj BLOB_READ_WRITE_TOKEN." }, { status: 502 });
+  }
 }
