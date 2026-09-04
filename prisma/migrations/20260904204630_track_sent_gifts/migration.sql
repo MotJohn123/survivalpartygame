@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "PointsSource" ADD VALUE 'PUBLIC_QUEST_GIFT_SENT';

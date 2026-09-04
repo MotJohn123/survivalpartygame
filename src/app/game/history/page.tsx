@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentPlayerId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const sourceLabels = { TASK: "Úkol", PUBLIC_QUEST_GIFT_RECEIVED: "Veřejný úkol · dar", SETUP_QUESTION: "Otázka", BETTING_WIN: "Sázka", ADMIN_ADJUSTMENT: "Úprava administrátorem" } as const;
+const sourceLabels = { TASK: "Úkol", PUBLIC_QUEST_GIFT_RECEIVED: "Přijatý dar", PUBLIC_QUEST_GIFT_SENT: "Odeslaný dar", SETUP_QUESTION: "Otázka", BETTING_WIN: "Sázka", ADMIN_ADJUSTMENT: "Úprava administrátorem" } as const;
 
 export default async function PointsHistoryPage() {
   const playerId = await getCurrentPlayerId();
