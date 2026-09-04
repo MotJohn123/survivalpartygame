@@ -1,59 +1,56 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+type Post = { id: number; text: string; createdAt: string; isSystem: boolean; player: { name: string } | null };
+type Board = { players: { id: number; rank: number; name: string; points: number; team: { name: string; color: string | null } | null }[]; teams: { id: number; name: string; points: number; color: string | null }[] };
+
 export default function Home() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [board, setBoard] = useState<Board | null>(null);
+  const [postIndex, setPostIndex] = useState(0);
 
   async function enterGame(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!name.trim()) return;
-    setError("");
-    setLoading(true);
+    setLoading(true); setError("");
     const response = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
-    const result = await response.json();
-    setLoading(false);
+    const result = await response.json(); setLoading(false);
     if (!response.ok) { setError(result.error ?? "Vstup se nepodařil."); return; }
     router.push("/game");
   }
 
-  return (
-    <main className="party-home">
-      <nav className="party-nav">
-        <a className="brand" href="#top"><span className="brand-mark">✦</span><span>Survival <em>Party</em></span></a>
-        <div className="party-nav-actions"><a href="#login">Přihlášení</a><a className="admin-link" href="/admin">Administrace <span>↗</span></a></div>
-      </nav>
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      const [postsResponse, boardResponse] = await Promise.all([fetch("/api/dashboard", { cache: "no-store" }), fetch("/api/leaderboard", { cache: "no-store" })]);
+      if (!active) return;
+      if (postsResponse.ok) setPosts((await postsResponse.json()).posts);
+      if (boardResponse.ok) setBoard(await boardResponse.json());
+    };
+    void load();
+    const interval = window.setInterval(load, 10000);
+    return () => { active = false; window.clearInterval(interval); };
+  }, []);
 
-      <section className="party-hero" id="top">
-        <div className="party-hero-copy">
-          <p className="eyebrow"><span /> hra pro celou partu</p>
-          <h1>Survival<br /><i>Party.</i></h1>
-          <p className="party-lead">Výzvy, body, aliance a historky, na které se bude vzpomínat ještě dlouho po víkendu.</p>
-          <a className="party-scroll" href="#live"><span>↓</span> Co se děje ve hře</a>
-        </div>
-        <div className="party-stage" aria-label="Ilustrace party u táborového ohně">
-          <div className="party-sun" /><div className="party-horizon" /><div className="party-shape shape-one" /><div className="party-shape shape-two" />
-          <div className="party-people"><span /><span /><span /><span /><span /></div>
-          <div className="party-fire"><i /><i /><i /><b /></div>
-          <p><b>01</b> Jedna parta.<br />Nekonečně příběhů.</p>
-        </div>
-      </section>
+  useEffect(() => {
+    if (posts.length < 2) return;
+    const interval = window.setInterval(() => setPostIndex((current) => (current + 1) % posts.length), 5000);
+    return () => window.clearInterval(interval);
+  }, [posts.length]);
 
-      <section className="party-login" id="login">
-        <div><p className="eyebrow"><span /> přidej se k ostatním</p><h2>Jak ti<br /><i>říkají?</i></h2></div>
-        <form className="party-entry-form" onSubmit={enterGame}><label htmlFor="name">Tvoje jméno</label><div><input id="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Napiš jméno nebo přezdívku" autoComplete="nickname" /><button type="submit" disabled={loading}>{loading ? "Vstupuji…" : "Vstoupit do hry →"}</button></div>{error && <p className="error-message">{error}</p>}</form>
-      </section>
+  const activePost = posts[postIndex];
 
-      <section className="party-live" id="live">
-        <div className="party-section-heading"><p className="eyebrow"><span /> živě z tábora</p><h2>Buď<br /><i>u toho.</i></h2></div>
-        <div className="party-links"><a className="party-link-card dashboard-card" href="/dashboard"><span className="card-number">01</span><div><strong>Nástěnka</strong><small>Novinky, momentky<br />a zprávy z party</small></div><b>↗</b></a><a className="party-link-card leaderboard-card" href="/leaderboard"><span className="card-number">02</span><div><strong>Žebříček</strong><small>Kdo vede? Kdo<br />stoupá vzhůru?</small></div><b>↗</b></a></div>
-      </section>
-
-      <footer className="party-footer"><span>Survival Party</span><span>Hra pro přátele · 2026</span></footer>
-    </main>
-  );
+  return <main className="party-home minimal-home">
+    <nav className="party-nav"><a className="brand" href="#top"><span className="brand-mark">✦</span><span>Survival <em>Party</em></span></a><div className="party-nav-actions"><form className="top-login" onSubmit={enterGame}><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Tvoje jméno" aria-label="Tvoje jméno" /><button type="submit" disabled={loading}>{loading ? "…" : "Vstoupit"}</button></form><a className="admin-link" href="/admin">Administrace <span>↗</span></a></div></nav>
+    {error && <p className="home-error">{error}</p>}
+    <section className="home-dashboard"><div className="home-section-label"><span /> NÁSTĚNKA <small>živě</small></div><div className="animated-post" key={activePost?.id ?? "empty"}>{activePost ? <><p className="post-kicker">{activePost.isSystem ? "Táborový hlas" : activePost.player?.name}</p><h1>{activePost.text}</h1><p className="post-time">Novinky z party právě teď</p></> : <><p className="post-kicker">Survival Party</p><h1>Party začíná.<br /><i>Buď u toho.</i></h1><p className="post-time">První zprávy se objeví během hry.</p></>}</div><div className="post-dots">{posts.slice(0, 6).map((post, index) => <button aria-label={`Příspěvek ${index + 1}`} className={index === postIndex ? "active" : ""} key={post.id} onClick={() => setPostIndex(index)} />)}</div></section>
+    <section className="home-leaderboard"><div className="home-section-label"><span /> ŽEBŘÍČEK <small>průběžně</small></div><div className="home-board-grid"><div><h2>Hráči</h2>{board?.players.slice(0, 5).map((player) => <div className="home-board-row" key={player.id}><strong>{String(player.rank).padStart(2, "0")}</strong><span className="rank-dot" style={{ background: player.team?.color ?? "#df633d" }} /><b>{player.name}</b><em>{player.points} b.</em></div>)}</div><div><h2>Kmeny</h2>{board?.teams.slice(0, 5).map((team, index) => <div className="home-board-row" key={team.id}><strong>{String(index + 1).padStart(2, "0")}</strong><span className="rank-dot" style={{ background: team.color ?? "#df633d" }} /><b>{team.name}</b><em>{team.points} b.</em></div>)}</div></div></section>
+    <footer className="party-footer"><span>Survival Party</span><span>Hra pro přátele · 2026</span></footer>
+  </main>;
 }
