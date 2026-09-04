@@ -2,6 +2,7 @@
 
 import { ChangeEvent, useState } from "react";
 import Image from "next/image";
+import { compressImage } from "@/lib/compress-image";
 
 export default function PhotoUpload({ currentPhoto }: { currentPhoto: string | null }) {
   const [photo, setPhoto] = useState(currentPhoto);
@@ -10,9 +11,9 @@ export default function PhotoUpload({ currentPhoto }: { currentPhoto: string | n
     const file = event.target.files?.[0];
     if (!file) return;
     setStatus("Nahrávám…");
-    const formData = new FormData(); formData.append("file", file);
+    const formData = new FormData(); formData.append("file", await compressImage(file));
     const response = await fetch("/api/upload", { method: "POST", body: formData });
-    const result = await response.json();
+    const result = await response.json().catch(() => ({ error: "Soubor je příliš velký nebo se ho nepodařilo nahrát." }));
     if (!response.ok) { setStatus(result.error ?? "Nahrání se nepodařilo."); return; }
     setPhoto(result.url); setStatus("Fotka uložena.");
   }

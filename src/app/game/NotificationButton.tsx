@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 export default function NotificationButton() {
-  const supported = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  const supported = useSyncExternalStore(() => () => undefined, () => true, () => false);
   const [status, setStatus] = useState("");
   if (!supported || typeof Notification === "undefined" || Notification.permission === "granted") return null;
   async function enable() {
