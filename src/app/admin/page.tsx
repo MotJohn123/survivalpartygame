@@ -5,7 +5,8 @@ import AdminOperations from "./AdminOperations";
 import AdminVoting from "./AdminVoting";
 import AdminBetting from "./AdminBetting";
 import AdminDashboard from "./AdminDashboard";
+import AdminQuestions from "./AdminQuestions";
 
 export default async function AdminPage() {
-  return await isAdminAuthenticated() ? <main className="admin-shell"><AdminTasks /><AdminOperations /><AdminVoting /><AdminBetting /><AdminDashboard /></main> : <AdminLogin />;
+  return await isAdminAuthenticated() ? <main className="admin-shell"><AdminTasks /><AdminOperations /><AdminVoting /><AdminBetting /><AdminQuestions /><AdminDashboard /></main> : <AdminLogin />;
 }
