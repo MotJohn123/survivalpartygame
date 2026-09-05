@@ -2,8 +2,9 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
-type Post = { id: number; text: string; createdAt: string; isSystem: boolean; player: { name: string } | null };
+type Post = { id: number; text: string; photoUrl: string | null; createdAt: string; isSystem: boolean; player: { name: string } | null };
 type Board = { players: { id: number; rank: number; name: string; points: number; team: { name: string; color: string | null } | null }[]; teams: { id: number; name: string; points: number; color: string | null }[] };
 
 export default function Home() {
@@ -49,7 +50,7 @@ export default function Home() {
   return <main className="party-home minimal-home">
     <nav className="party-nav"><a className="brand" href="#top"><span className="brand-mark">✦</span><span>Survival <em>Party</em></span></a><div className="party-nav-actions"><form className="top-login" onSubmit={enterGame}><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Tvoje jméno" aria-label="Tvoje jméno" /><button type="submit" disabled={loading}>{loading ? "…" : "Vstoupit"}</button></form><a className="admin-link" href="/admin">Administrace <span>↗</span></a></div></nav>
     {error && <p className="home-error">{error}</p>}
-    <section className="home-dashboard"><div className="home-section-label"><span /> NÁSTĚNKA <small>živě</small></div><div className="animated-post" key={activePost?.id ?? "empty"}>{activePost ? <><p className="post-kicker">{activePost.isSystem ? "Táborový hlas" : activePost.player?.name}</p><h1>{activePost.text}</h1><p className="post-time">Novinky z party právě teď</p></> : <><p className="post-kicker">Survival Party</p><h1>Party začíná.<br /><i>Buď u toho.</i></h1><p className="post-time">První zprávy se objeví během hry.</p></>}</div><div className="post-dots">{posts.slice(0, 6).map((post, index) => <button aria-label={`Příspěvek ${index + 1}`} className={index === postIndex ? "active" : ""} key={post.id} onClick={() => setPostIndex(index)} />)}</div></section>
+    <section className="home-dashboard"><div className="home-section-label"><span /> NÁSTĚNKA <small>živě</small></div><div className="animated-post" key={activePost?.id ?? "empty"}>{activePost ? <div className="home-post-layout">{activePost.photoUrl && <Image className="home-post-photo" src={activePost.photoUrl} alt="Fotka z party" width={360} height={240} unoptimized />}<div><p className="post-kicker">{activePost.isSystem ? "Organizace" : activePost.player?.name}</p><h1>{activePost.text}</h1><p className="post-time">Novinky z party právě teď</p></div></div> : <><p className="post-kicker">Survival Party</p><h1>Party začíná.<br /><i>Buď u toho.</i></h1><p className="post-time">První zprávy se objeví během hry.</p></>}</div><div className="post-dots">{posts.slice(0, 6).map((post, index) => <button aria-label={`Příspěvek ${index + 1}`} className={index === postIndex ? "active" : ""} key={post.id} onClick={() => setPostIndex(index)} />)}</div></section>
     <section className="home-leaderboard"><div className="home-section-label"><span /> ŽEBŘÍČEK <small>průběžně</small></div><div className="home-board-grid"><div><h2>Hráči</h2>{board?.players.slice(0, 5).map((player) => <div className="home-board-row" key={player.id}><strong>{String(player.rank).padStart(2, "0")}</strong><span className="rank-dot" style={{ background: player.team?.color ?? "#df633d" }} /><b>{player.name}</b><em>{player.points} b.</em></div>)}</div><div><h2>Kmeny</h2>{board?.teams.slice(0, 5).map((team, index) => <div className="home-board-row" key={team.id}><strong>{String(index + 1).padStart(2, "0")}</strong><span className="rank-dot" style={{ background: team.color ?? "#df633d" }} /><b>{team.name}</b><em>{team.points} b.</em></div>)}</div></div></section>
     <footer className="party-footer"><span>Survival Party</span><span>Hra pro přátele · 2026</span></footer>
   </main>;
