@@ -97,8 +97,8 @@ export default function TaskPanel({ initialCode = "", initialPoints }: TaskPanel
       void scanner.start(camera.id, { fps: 10, qrbox: { width: 220, height: 220 } }, async (decodedText) => {
         if (handled) return;
         handled = true;
-        await scanner?.stop().catch(() => undefined);
-        await scanner?.clear().catch(() => undefined);
+        try { await scanner?.stop(); } catch {}
+        try { await scanner?.clear(); } catch {}
         setScanning(false);
         const decodedCode = (() => { try { return new URL(decodedText, window.location.origin).searchParams.get("code") ?? decodedText; } catch { return decodedText; } })();
         await lookupTask(decodedCode);
