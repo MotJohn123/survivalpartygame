@@ -55,6 +55,7 @@ model Player {
   bettingCandidacies BettingCandidate[]
   betsPlaced Bet[] @relation("Bettor")
   betsAsCandidate Bet[] @relation("BetOnCandidate")
+  betSelections BetSelection[]
   bettingWins BettingWinner[]
 }
 
@@ -205,11 +206,14 @@ model PushSubscription {
 model BettingRound {
   id Int @id @default(autoincrement())
   title String?
-  teamAId Int
-  teamA Team @relation("BettingTeamA", fields: [teamAId], references: [id])
-  teamBId Int
-  teamB Team @relation("BettingTeamB", fields: [teamBId], references: [id])
-  rewardPoints Int
+  teamAId Int?
+  teamA Team? @relation("BettingTeamA", fields: [teamAId], references: [id])
+  teamBId Int?
+  teamB Team? @relation("BettingTeamB", fields: [teamBId], references: [id])
+  maxBet Int @default(100)
+  multiplier Int @default(2)
+  maxPlayers Int @default(1)
+  rewardPoints Int @default(0)
   isOpen Boolean @default(true)
   isResolved Boolean @default(false)
   createdAt DateTime @default(now())
@@ -234,10 +238,20 @@ model Bet {
   bettingRound BettingRound @relation(fields: [bettingRoundId], references: [id])
   bettorId Int
   bettor Player @relation("Bettor", fields: [bettorId], references: [id])
-  candidateId Int
-  candidate Player @relation("BetOnCandidate", fields: [candidateId], references: [id])
+  stake Int @default(0)
+  candidateId Int?
+  candidate Player? @relation("BetOnCandidate", fields: [candidateId], references: [id])
   createdAt DateTime @default(now())
   @@unique([bettingRoundId, bettorId])
+  selections BetSelection[]
+}
+
+model BetSelection {
+  betId Int
+  bet Bet @relation(fields: [betId], references: [id], onDelete: Cascade)
+  candidateId Int
+  candidate Player @relation(fields: [candidateId], references: [id])
+  @@id([betId, candidateId])
 }
 
 model BettingWinner {
