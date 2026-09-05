@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       const task = await tx.task.findFirst({ where: { taskCode, isActive: true } });
       if (!task) throw new TaskError("Tento úkol neexistuje nebo už není aktivní.", 404);
 
-      const completionCount = await tx.taskCompletion.count({ where: task.repeatability === "MULTIPLE" ? { taskId: task.id } : { taskId: task.id, playerId } });
+      const completionCount = await tx.taskCompletion.count({ where: task.repeatability === "ONCE" || task.repeatability === "MULTIPLE" ? { taskId: task.id } : { taskId: task.id, playerId } });
       const limit = task.repeatability === "ONCE" || task.repeatability === "PER_PLAYER_ONCE" ? 1 : task.repeatability === "MULTIPLE" ? (task.maxCompletions ?? 1) : null;
       if (limit !== null && completionCount >= limit) throw new TaskError("Tento úkol už jsi splnil/a maximální počet krát.", 409);
 
