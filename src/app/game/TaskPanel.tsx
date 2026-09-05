@@ -13,11 +13,12 @@ interface Task {
 interface TaskPanelProps {
   initialCode?: string;
   initialPoints: number;
+  initialTask?: Task | null;
 }
 
-export default function TaskPanel({ initialCode = "", initialPoints }: TaskPanelProps) {
+export default function TaskPanel({ initialCode = "", initialPoints, initialTask = null }: TaskPanelProps) {
   const [code, setCode] = useState(initialCode);
-  const [task, setTask] = useState<Task | null>(null);
+  const [task, setTask] = useState<Task | null>(initialTask);
   const [points, setPoints] = useState(initialPoints);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -69,6 +70,7 @@ export default function TaskPanel({ initialCode = "", initialPoints }: TaskPanel
 
   useEffect(() => {
     if (!initialCode) return;
+    if (initialTask) return;
     const normalizedCode = initialCode.trim().toUpperCase();
     void fetch(`/api/tasks/lookup?code=${encodeURIComponent(normalizedCode)}`)
       .then(async (response) => ({ response, result: await response.json() }))
@@ -80,7 +82,7 @@ export default function TaskPanel({ initialCode = "", initialPoints }: TaskPanel
         setCode(normalizedCode);
         setTask(result.task);
       });
-  }, [initialCode, lookupTask]);
+  }, [initialCode, initialTask, lookupTask]);
 
   useEffect(() => {
     if (!scanning) return;

@@ -22,11 +22,13 @@ export default async function GamePage({ searchParams }: { searchParams: Promise
 
   if (!player) redirect("/");
 
+  const qrTask = code ? await prisma.task.findFirst({ where: { taskCode: code.trim().toUpperCase(), isActive: true }, select: { id: true, taskCode: true, taskText: true, taskPoints: true, isPublicQuest: true } }) : null;
+
   return (
     <main className="game-shell">
       <header className="game-header"><Link className="brand" href="/">✦ Survival <em>Party</em></Link><nav className="game-nav"><NotificationButton /><Link href="/leaderboard">Žebříček</Link><Link href="/game/history">Historie bodů</Link><a href="/api/auth/logout">Odhlásit</a></nav></header>
       <section className="game-welcome"><PhotoUpload currentPhoto={player.photoUrl} /><p className="eyebrow"><span /> tvůj tábor</p><h1>Vítej, <i>{player.name}.</i></h1><p className="game-intro">Výprava čeká. Zatím máš na kontě:</p><div className="points-card"><strong>{player.points}</strong><span>bodů</span></div><div className="team-note">{player.team ? <>Tvůj kmen: <b>{player.team.name}</b></> : "Zatím nejsi v žádném týmu"}</div></section>
-      <TaskPanel initialCode={code} initialPoints={player.points} />
+      <TaskPanel initialCode={code} initialPoints={player.points} initialTask={qrTask} />
       <VotingPanel />
       <BettingPanel />
       <QuestionsPanel />
