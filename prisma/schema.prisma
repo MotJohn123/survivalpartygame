@@ -10,6 +10,7 @@ enum TaskRepeatability {
   ONCE
   MULTIPLE
   UNLIMITED
+  PER_PLAYER_ONCE
 }
 
 enum VoteType {

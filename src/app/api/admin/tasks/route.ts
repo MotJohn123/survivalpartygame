@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   const taskCode = typeof body.taskCode === "string" ? body.taskCode.trim().toUpperCase() : "";
   const taskText = typeof body.taskText === "string" ? body.taskText.trim() : "";
   const taskPoints = Number(body.taskPoints);
-  const repeatability = body.repeatability === "MULTIPLE" || body.repeatability === "UNLIMITED" ? body.repeatability : "ONCE";
+  const repeatability = body.repeatability === "MULTIPLE" || body.repeatability === "UNLIMITED" || body.repeatability === "PER_PLAYER_ONCE" ? body.repeatability : "ONCE";
   const maxCompletions = repeatability === "MULTIPLE" ? Number(body.maxCompletions) || 1 : null;
   if (!taskCode || !taskText || !Number.isInteger(taskPoints) || taskPoints < 1) return Response.json({ error: "Vyplň kód, text a kladnou odměnu." }, { status: 400 });
   try {

@@ -33,7 +33,7 @@ export default function TaskPanel({ initialCode = "", initialPoints }: TaskPanel
     setMessage("");
     setLoading(true);
     const response = await fetch(`/api/tasks/lookup?code=${encodeURIComponent(normalizedCode)}`);
-    const result = await response.json();
+    const result = await response.json().catch(() => ({ error: "Úkol se nepodařilo načíst." }));
     setLoading(false);
     if (!response.ok) {
       setError(result.error ?? "Úkol se nepodařilo najít.");
@@ -56,7 +56,7 @@ export default function TaskPanel({ initialCode = "", initialPoints }: TaskPanel
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ taskCode: task.taskCode }),
     });
-    const result = await response.json();
+    const result = await response.json().catch(() => ({ error: "Úkol se nepodařilo dokončit." }));
     setLoading(false);
     if (!response.ok) {
       setError(result.error ?? "Úkol se nepodařilo dokončit.");
@@ -94,7 +94,7 @@ export default function TaskPanel({ initialCode = "", initialPoints }: TaskPanel
         setScanning(false);
         await scanner?.stop();
         await scanner?.clear();
-        const decodedCode = new URL(decodedText, window.location.origin).searchParams.get("code") ?? decodedText;
+        const decodedCode = (() => { try { return new URL(decodedText, window.location.origin).searchParams.get("code") ?? decodedText; } catch { return decodedText; } })();
         setCode(decodedCode);
         await lookupTask(decodedCode);
       }, () => undefined).catch(() => setError("Kameru se nepodařilo spustit. Zkontroluj oprávnění pro fotoaparát."));

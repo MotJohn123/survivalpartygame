@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       if (!task) throw new TaskError("Tento úkol neexistuje nebo už není aktivní.", 404);
 
       const completionCount = await tx.taskCompletion.count({ where: { taskId: task.id, playerId } });
-      const limit = task.repeatability === "ONCE" ? 1 : task.repeatability === "MULTIPLE" ? (task.maxCompletions ?? 1) : null;
+      const limit = task.repeatability === "ONCE" || task.repeatability === "PER_PLAYER_ONCE" ? 1 : task.repeatability === "MULTIPLE" ? (task.maxCompletions ?? 1) : null;
       if (limit !== null && completionCount >= limit) throw new TaskError("Tento úkol už jsi splnil/a maximální počet krát.", 409);
 
       const pointsAwarded = task.isPublicQuest ? 0 : task.taskPoints;
