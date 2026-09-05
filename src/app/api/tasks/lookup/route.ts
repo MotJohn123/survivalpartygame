@@ -9,6 +9,6 @@ export async function GET(request: Request) {
     select: { id: true, taskCode: true, taskText: true, taskPoints: true, isPublicQuest: true },
   });
 
-  if (!task) return Response.json({ error: "Tento úkol neexistuje nebo už není aktivní." }, { status: 404 });
-  return Response.json({ task });
+  if (!task) return Response.json({ error: "Tento úkol neexistuje nebo už není aktivní." }, { status: 404, headers: { "Cache-Control": "no-store" } });
+  return Response.json({ task }, { headers: { "Cache-Control": "no-store" } });
 }

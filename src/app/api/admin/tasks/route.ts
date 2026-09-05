@@ -4,7 +4,7 @@ import { notifyPlayers } from "@/lib/push";
 
 export async function GET() {
   if (!await isAdminAuthenticated()) return Response.json({ error: "Neautorizovaný přístup." }, { status: 401 });
-  const tasks = await prisma.task.findMany({ orderBy: { createdAt: "desc" }, include: { _count: { select: { completions: true } } } });
+  const tasks = await prisma.task.findMany({ where: { isActive: true }, orderBy: { createdAt: "desc" }, include: { _count: { select: { completions: true } } } });
   return Response.json({ tasks });
 }
 
