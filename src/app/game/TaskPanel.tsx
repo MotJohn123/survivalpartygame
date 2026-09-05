@@ -87,17 +87,20 @@ export default function TaskPanel({ initialCode = "", initialPoints }: TaskPanel
     let scanner: import("html5-qrcode").Html5Qrcode | undefined;
     let cancelled = false;
 
-    void import("html5-qrcode").then(({ Html5Qrcode }) => {
+    void import("html5-qrcode").then(async ({ Html5Qrcode }) => {
       if (cancelled) return;
       scanner = new Html5Qrcode("task-qr-reader");
-      void scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 220, height: 220 } }, async (decodedText) => {
+      const cameras = await Html5Qrcode.getCameras();
+      const camera = cameras.find((item) => /back|rear|environment/i.test(item.label)) ?? cameras[0];
+      if (!camera) throw new Error("camera-not-found");
+      void scanner.start(camera.id, { fps: 10, qrbox: { width: 220, height: 220 } }, async (decodedText) => {
         setScanning(false);
         await scanner?.stop();
         await scanner?.clear();
         const decodedCode = (() => { try { return new URL(decodedText, window.location.origin).searchParams.get("code") ?? decodedText; } catch { return decodedText; } })();
         setCode(decodedCode);
         await lookupTask(decodedCode);
-      }, () => undefined).catch(() => setError("Kameru se nepodařilo spustit. Zkontroluj oprávnění pro fotoaparát."));
+      }, () => undefined).catch(() => setError("Kameru se nepodařilo spustit. Povol fotoaparát v prohlížeči a zkus to znovu."));
     });
 
     return () => {
