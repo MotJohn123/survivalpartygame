@@ -16,11 +16,11 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   if (!await isAdminAuthenticated()) return Response.json({ error: "Neautorizovaný přístup." }, { status: 401 });
   const id = Number((await params).id);
   if (!Number.isInteger(id)) return Response.json({ error: "Neplatné ID týmu." }, { status: 400 });
-  const rounds = await prisma.bettingRound.count({ where: { OR: [{ teamAId: id }, { teamBId: id }] } });
-  if (rounds > 0) return Response.json({ error: "Tým nelze smazat, protože je použitý v historické sázkové rundě." }, { status: 409 });
   await prisma.$transaction(async (tx) => {
     await tx.player.updateMany({ where: { teamId: id }, data: { teamId: null } });
     await tx.voting.updateMany({ where: { teamId: id }, data: { teamId: null } });
+    await tx.bettingRound.updateMany({ where: { teamAId: id }, data: { teamAId: null } });
+    await tx.bettingRound.updateMany({ where: { teamBId: id }, data: { teamBId: null } });
     await tx.team.delete({ where: { id } });
   });
   return Response.json({ success: true });
