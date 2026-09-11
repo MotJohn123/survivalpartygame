@@ -28,11 +28,13 @@ a { color: inherit; text-decoration: none; }
 .animated-post h1 { white-space: pre-line; }
 .feed-content img { height: auto; max-height: none; object-fit: contain; width: 100%; }
 .dashboard-shell .feed-list { max-width: 1400px; width: calc(100vw - 64px); }.dashboard-shell .feed-post { gap: 28px; }.dashboard-shell .feed-content { min-width: 0; width: 100%; }.post-question-label, .post-answer-label { color: var(--orange); display: block; font: 11px var(--font-body); letter-spacing: .08em; margin-top: 8px; text-transform: uppercase; }.post-answer-label { color: #7e8b7b; }.home-post-copy { color: var(--forest); display: flex; flex-direction: column; font: 32px/1.05 var(--font-display); gap: 4px; text-transform: uppercase; }.home-question-text, .home-answer-text { font: 46px/.92 var(--font-display); }.home-post-copy .post-question-label, .home-post-copy .post-answer-label { font-size: 10px; margin-top: 12px; }
+.dashboard-shell .feed-post.has-photo .feed-photo { display: block; }
 .home-board-teams, .home-board-players { min-width: 0; }
 .dashboard-shell .feed-post.has-photo { align-items: start; display: grid; grid-template-columns: 40px minmax(0, 1fr) minmax(0, 2fr); }.dashboard-shell .feed-post.has-photo .feed-photo { height: auto; max-height: none; object-fit: contain; width: 100%; }.dashboard-shell .feed-post.has-photo .feed-content { grid-column: 3; }
 .home-board-row { min-width: 0; }.home-board-row b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 760px) { .home-leaderboard { padding-left: 7vw; padding-right: 7vw; }.home-board-grid { gap: 48px; }.home-board-grid h2 { font-size: 32px; }.home-board-row { gap: 8px; min-height: 49px; }.home-board-row em { font-size: 16px; }.home-board-row strong { width: 20px; } }
 @media (max-width: 760px) { .dashboard-shell .feed-list { width: auto; }.dashboard-shell .feed-post, .dashboard-shell .feed-post.has-photo { display: block; }.dashboard-shell .feed-avatar { margin-bottom: 12px; }.dashboard-shell .feed-photo { display: block; margin-bottom: 16px; width: 100%; }.dashboard-shell .feed-post.has-photo .feed-content { grid-column: auto; }.home-question-text, .home-answer-text { font-size: 36px; } }
+@media (max-width: 760px) { .dashboard-shell .feed-post.has-photo { display: block !important; grid-template-columns: none !important; gap: 0 !important; }.dashboard-shell .feed-post.has-photo .feed-content { grid-column: auto !important; } }
 /* Homepage leaderboard: full-width sections in the requested order. */
 .minimal-home .home-board-grid { display: flex; flex-direction: column; gap: 48px; width: 100%; }
 .minimal-home .home-board-teams, .minimal-home .home-board-players { width: 100%; }
