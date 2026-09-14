@@ -139,12 +139,6 @@ model DashboardPost {
   createdAt DateTime @default(now())
 }
 
-model AppSetting {
-  key String @id
-  value String
-  updatedAt DateTime @updatedAt
-}
-
 model SetupQuestion {
   id Int @id @default(autoincrement())
   text String
