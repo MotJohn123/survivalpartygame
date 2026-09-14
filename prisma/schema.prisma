@@ -34,6 +34,13 @@ enum PointsSource {
   ADMIN_ADJUSTMENT
 }
 
+model AppSetting {
+  id String @id @default("general")
+  dashboardVisible Boolean @default(true)
+  leaderboardVisible Boolean @default(true)
+  updatedAt DateTime @updatedAt
+}
+
 enum QuestionScope {
   ALL
   TEAM

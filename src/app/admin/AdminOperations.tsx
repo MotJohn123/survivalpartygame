@@ -32,13 +32,30 @@ export default function AdminOperations() {
     }
   }
 
+  async function loadSettings() {
+    const response = await fetch("/api/admin/settings", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setDashboardVisible(Boolean(data.settings.dashboardVisible));
+    setLeaderboardVisible(Boolean(data.settings.leaderboardVisible));
+  }
+
   useEffect(() => {
     let active = true;
-    void fetch("/api/admin/teams", { cache: "no-store" }).then(async (response) => {
-      if (active && response.ok) {
-        const data = await response.json();
+    void Promise.all([
+      fetch("/api/admin/teams", { cache: "no-store" }),
+      fetch("/api/admin/settings", { cache: "no-store" })
+    ]).then(async ([teamsResponse, settingsResponse]) => {
+      if (!active) return;
+      if (teamsResponse.ok) {
+        const data = await teamsResponse.json();
         setTeams(data.teams);
         setPlayers(data.players);
+      }
+      if (settingsResponse.ok) {
+        const data = await settingsResponse.json();
+        setDashboardVisible(Boolean(data.settings.dashboardVisible));
+        setLeaderboardVisible(Boolean(data.settings.leaderboardVisible));
       }
     });
     void fetch("/api/settings", { cache: "no-store" }).then(async (response) => {
@@ -109,14 +126,15 @@ export default function AdminOperations() {
     await load();
   }
 
-  async function saveVisibility() {
+  async function updateVisibility() {
     const response = await fetch("/api/admin/settings", {
-      method: "POST",
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dashboardVisible, leaderboardVisible }),
+      body: JSON.stringify({ dashboardVisible, leaderboardVisible })
     });
     const data = await response.json();
-    setMessage(response.ok ? "Viditelnost zmen updates." : data.error ?? "Nastavení se nepodařilo uložit.");
+    setMessage(response.ok ? "Viditelnost upravena." : data.error);
+    if (response.ok) await loadSettings();
   }
 
   return (
@@ -127,7 +145,7 @@ export default function AdminOperations() {
         <form className="admin-operation-card" onSubmit={assignPlayer}><h3>Přiřadit hráče</h3><select value={selectedPlayer} onChange={(event) => setSelectedPlayer(event.target.value)}><option value="">Vyber hráče</option>{players.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><select value={selectedTeam} onChange={(event) => setSelectedTeam(event.target.value)}><option value="">Bez týmu</option>{teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select><button type="submit">Uložit tým</button></form>
         <form className="admin-operation-card" onSubmit={adjustPoints}><h3>Body hráči</h3><select value={selectedPlayer} onChange={(event) => setSelectedPlayer(event.target.value)}><option value="">Vyber hráče</option>{players.map((player) => <option key={player.id} value={player.id}>{player.name} · {player.points} b.</option>)}</select><input type="number" placeholder="+ / - body" value={points} onChange={(event) => setPoints(event.target.value)} /><input placeholder="Důvod" value={reason} onChange={(event) => setReason(event.target.value)} /><button type="submit">Připsat / odečíst</button></form>
         <form className="admin-operation-card" onSubmit={adjustTeamPoints}><h3>Body celému týmu</h3><select value={selectedTeam} onChange={(event) => setSelectedTeam(event.target.value)}><option value="">Vyber tým</option>{teams.map((team) => <option key={team.id} value={team.id}>{team.name} · {team.players.length} hráčů</option>)}</select><input type="number" placeholder="+ / - body" value={teamPoints} onChange={(event) => setTeamPoints(event.target.value)} /><input placeholder="Důvod" value={teamReason} onChange={(event) => setTeamReason(event.target.value)} /><button type="submit">Upravit celý tým</button></form>
-        <div className="admin-operation-card"><h3>Viditelnost</h3><label><input type="checkbox" checked={dashboardVisible} onChange={(event) => setDashboardVisible(event.target.checked)} /> Nástěnka</label><label><input type="checkbox" checked={leaderboardVisible} onChange={(event) => setLeaderboardVisible(event.target.checked)} /> Žebříček</label><button type="button" onClick={() => void saveVisibility()}>Uložit viditelnost</button></div>
+        <div className="admin-operation-card"><h3>Viditelnost</h3><label><span>Nástěnka</span><input type="checkbox" checked={dashboardVisible} onChange={(event) => setDashboardVisible(event.target.checked)} /></label><label><span>Žebříček</span><input type="checkbox" checked={leaderboardVisible} onChange={(event) => setLeaderboardVisible(event.target.checked)} /></label><button type="button" onClick={() => void updateVisibility()}>Uložit viditelnost</button></div>
       </div>
       <div className="admin-directory"><div><h3>Týmy</h3>{teams.map((team) => <article key={team.id}><span className="directory-color" style={{ background: team.color ?? "#df633d" }} />{editingTeam === team.id ? <input className="directory-edit" value={editName} onChange={(event) => setEditName(event.target.value)} /> : <b>{team.name}</b>}<small>{team.players.length} hráčů</small>{editingTeam === team.id ? <button type="button" onClick={() => void saveTeam(team)}>Uložit</button> : <button type="button" onClick={() => { setEditingTeam(team.id); setEditName(team.name); }}>Upravit</button>}<button type="button" className="danger-button" onClick={() => void deleteTeam(team)}>Smazat</button></article>)}</div><div><h3>Hráči</h3>{players.map((player) => <article key={player.id}>{editingPlayer === player.id ? <input className="directory-edit" value={editName} onChange={(event) => setEditName(event.target.value)} /> : <b>{player.name}</b>}<small>{player.points} bodů</small>{editingPlayer === player.id ? <button type="button" onClick={() => void savePlayer(player)}>Uložit</button> : <button type="button" onClick={() => { setEditingPlayer(player.id); setEditName(player.name); }}>Upravit</button>}<button type="button" className="danger-button" onClick={() => void deletePlayer(player)}>Smazat</button></article>)}</div></div>
     </section>
