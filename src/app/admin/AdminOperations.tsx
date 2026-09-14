@@ -17,6 +17,8 @@ export default function AdminOperations() {
   const [teamPoints, setTeamPoints] = useState("");
   const [teamReason, setTeamReason] = useState("");
   const [message, setMessage] = useState("");
+  const [dashboardVisible, setDashboardVisible] = useState(true);
+  const [leaderboardVisible, setLeaderboardVisible] = useState(true);
   const [editingTeam, setEditingTeam] = useState<number | null>(null);
   const [editingPlayer, setEditingPlayer] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
@@ -38,6 +40,12 @@ export default function AdminOperations() {
         setTeams(data.teams);
         setPlayers(data.players);
       }
+    });
+    void fetch("/api/settings", { cache: "no-store" }).then(async (response) => {
+      if (!active || !response.ok) return;
+      const data = await response.json();
+      setDashboardVisible(Boolean(data.dashboardVisible));
+      setLeaderboardVisible(Boolean(data.leaderboardVisible));
     });
     return () => { active = false; };
   }, []);
@@ -101,6 +109,16 @@ export default function AdminOperations() {
     await load();
   }
 
+  async function saveVisibility() {
+    const response = await fetch("/api/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dashboardVisible, leaderboardVisible }),
+    });
+    const data = await response.json();
+    setMessage(response.ok ? "Viditelnost zmen updates." : data.error ?? "Nastavení se nepodařilo uložit.");
+  }
+
   return (
     <section className="admin-operations">
       <div className="admin-section-heading"><div><p className="eyebrow"><span /> lidé a kmeny</p><h2>Správa<br /><i>tábora.</i></h2></div>{message && <p className="admin-message">{message}</p>}</div>
@@ -109,6 +127,7 @@ export default function AdminOperations() {
         <form className="admin-operation-card" onSubmit={assignPlayer}><h3>Přiřadit hráče</h3><select value={selectedPlayer} onChange={(event) => setSelectedPlayer(event.target.value)}><option value="">Vyber hráče</option>{players.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><select value={selectedTeam} onChange={(event) => setSelectedTeam(event.target.value)}><option value="">Bez týmu</option>{teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select><button type="submit">Uložit tým</button></form>
         <form className="admin-operation-card" onSubmit={adjustPoints}><h3>Body hráči</h3><select value={selectedPlayer} onChange={(event) => setSelectedPlayer(event.target.value)}><option value="">Vyber hráče</option>{players.map((player) => <option key={player.id} value={player.id}>{player.name} · {player.points} b.</option>)}</select><input type="number" placeholder="+ / - body" value={points} onChange={(event) => setPoints(event.target.value)} /><input placeholder="Důvod" value={reason} onChange={(event) => setReason(event.target.value)} /><button type="submit">Připsat / odečíst</button></form>
         <form className="admin-operation-card" onSubmit={adjustTeamPoints}><h3>Body celému týmu</h3><select value={selectedTeam} onChange={(event) => setSelectedTeam(event.target.value)}><option value="">Vyber tým</option>{teams.map((team) => <option key={team.id} value={team.id}>{team.name} · {team.players.length} hráčů</option>)}</select><input type="number" placeholder="+ / - body" value={teamPoints} onChange={(event) => setTeamPoints(event.target.value)} /><input placeholder="Důvod" value={teamReason} onChange={(event) => setTeamReason(event.target.value)} /><button type="submit">Upravit celý tým</button></form>
+        <div className="admin-operation-card"><h3>Viditelnost</h3><label><input type="checkbox" checked={dashboardVisible} onChange={(event) => setDashboardVisible(event.target.checked)} /> Nástěnka</label><label><input type="checkbox" checked={leaderboardVisible} onChange={(event) => setLeaderboardVisible(event.target.checked)} /> Žebříček</label><button type="button" onClick={() => void saveVisibility()}>Uložit viditelnost</button></div>
       </div>
       <div className="admin-directory"><div><h3>Týmy</h3>{teams.map((team) => <article key={team.id}><span className="directory-color" style={{ background: team.color ?? "#df633d" }} />{editingTeam === team.id ? <input className="directory-edit" value={editName} onChange={(event) => setEditName(event.target.value)} /> : <b>{team.name}</b>}<small>{team.players.length} hráčů</small>{editingTeam === team.id ? <button type="button" onClick={() => void saveTeam(team)}>Uložit</button> : <button type="button" onClick={() => { setEditingTeam(team.id); setEditName(team.name); }}>Upravit</button>}<button type="button" className="danger-button" onClick={() => void deleteTeam(team)}>Smazat</button></article>)}</div><div><h3>Hráči</h3>{players.map((player) => <article key={player.id}>{editingPlayer === player.id ? <input className="directory-edit" value={editName} onChange={(event) => setEditName(event.target.value)} /> : <b>{player.name}</b>}<small>{player.points} bodů</small>{editingPlayer === player.id ? <button type="button" onClick={() => void savePlayer(player)}>Uložit</button> : <button type="button" onClick={() => { setEditingPlayer(player.id); setEditName(player.name); }}>Upravit</button>}<button type="button" className="danger-button" onClick={() => void deletePlayer(player)}>Smazat</button></article>)}</div></div>
     </section>
